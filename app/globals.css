@@ -186,6 +186,49 @@ body {
   transform: translate3d(0, 0, 0) scale(0.98);
 }
 
+/* ---------- Campos de fecha (más claros y modernos) ---------- */
+.date-field {
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+/* Indicador del calendario: más grande, tinte verde, afordancia clara */
+.date-field::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  margin-left: 4px;
+  padding: 3px;
+  border-radius: 8px;
+  opacity: 0.85;
+  /* Tinte aproximado a emerald-600 sobre el icono negro nativo */
+  filter: invert(43%) sepia(58%) saturate(560%) hue-rotate(116deg)
+    brightness(92%);
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+.date-field::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background-color: rgba(16, 185, 129, 0.14);
+}
+/* Limpiar microtexto interno para que respire */
+.date-field::-webkit-datetime-edit {
+  padding: 0;
+}
+.date-field::-webkit-datetime-edit-fields-wrapper {
+  color: inherit;
+}
+/* En oscuro: calendario nativo oscuro + icono claro */
+.dark .date-field {
+  color-scheme: dark;
+}
+.dark .date-field::-webkit-calendar-picker-indicator {
+  filter: invert(72%) sepia(40%) saturate(500%) hue-rotate(115deg)
+    brightness(110%);
+}
+.dark .date-field::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(52, 211, 153, 0.18);
+}
+
 /* Focus visible accesible (no sacrificar a11y por estética) */
 a:focus-visible,
 button:focus-visible,

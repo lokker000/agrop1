@@ -78,8 +78,9 @@ export default function CropSelector({
         <input
           type="date"
           value={startDate}
+          min="2020-01-01"
           onChange={(e) => onStartDateChange(e.target.value)}
-          className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+          className="date-field w-full rounded-xl border border-gray-200 bg-white px-3.5 py-3 text-sm font-medium text-gray-800 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
         />
       </Field>
     </div>

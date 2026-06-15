@@ -141,13 +141,14 @@ export default function StationSelector({ onData, from, to }: Props) {
           <input
             type="date"
             value={fromDate}
+            min="2020-01-01"
             max={toDate || today}
             onChange={(e) => {
               setFromDate(e.target.value);
               setLoaded(0);
               setError(null);
             }}
-            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+            className="date-field w-full rounded-xl border border-gray-200 bg-white px-3.5 py-3 text-sm font-medium text-gray-800 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
           />
         </label>
         <label className="block">
@@ -158,14 +159,14 @@ export default function StationSelector({ onData, from, to }: Props) {
           <input
             type="date"
             value={toDate}
-            min={fromDate}
+            min={fromDate || "2020-01-01"}
             max={today}
             onChange={(e) => {
               setToDate(e.target.value);
               setLoaded(0);
               setError(null);
             }}
-            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+            className="date-field w-full rounded-xl border border-gray-200 bg-white px-3.5 py-3 text-sm font-medium text-gray-800 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
           />
         </label>
       </div>

@@ -80,11 +80,12 @@ export default function ColdHoursCalculator() {
             <input
               type="date"
               value={endDate}
+              min="2020-01-01"
               onChange={(e) => {
                 setEndDate(e.target.value);
                 setCalculated(false);
               }}
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+              className="date-field w-full rounded-xl border border-gray-200 bg-white px-3.5 py-3 text-sm font-medium text-gray-800 shadow-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
             />
             <span className="mt-1 block text-xs text-gray-400">
               Si se deja vacío, se considera hasta el último dato disponible.
