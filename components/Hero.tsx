@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SnowIcon, LeafIcon, ThermometerIcon, ChartIcon } from "./icons";
 
 const TITLE = "Calculadora de Horas Frío";
@@ -24,6 +25,18 @@ export default function Hero() {
 
       {/* Fundido inferior hacia el fondo de la página */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[var(--background)] to-transparent" />
+
+      {/* Botón Pronóstico (beta) — esquina superior derecha */}
+      <Link
+        href="/pronostico"
+        className="glass btn-tactile absolute top-4 right-4 z-20 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-emerald-950/80 ring-1 ring-white/40"
+      >
+        <SnowIcon className="h-4 w-4 text-sky-600" />
+        Pronóstico
+        <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[0.6rem] font-bold tracking-wide text-white uppercase">
+          beta
+        </span>
+      </Link>
 
       <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-6 py-20 sm:py-28 lg:grid-cols-[1.3fr_1fr]">
         {/* Columna texto */}
