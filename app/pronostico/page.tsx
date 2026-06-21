@@ -37,6 +37,17 @@ function fechaLarga(iso: string) {
   return `${e.dow} ${e.num} ${e.mes}`;
 }
 
+// Formatea el ISO de obtención a hora local legible (es-CL).
+function formatActualizado(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleString("es-CL", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 // Intensidad de frío -> tono (más HF = más azul).
 function tono(hf: number) {
   if (hf >= 18) return "from-sky-600 to-cyan-600 text-white";
@@ -166,6 +177,15 @@ export default function PronosticoPage() {
               {data?.ubicacion ?? "Los Lingues"} · próximos {data?.dias ?? 14} días ·
               modelo 0–7.2 °C · fuente Open-Meteo
             </p>
+            {data?.generado && (
+              <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-100">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                </span>
+                Datos obtenidos de Open-Meteo: {formatActualizado(data.generado)} hrs
+              </p>
+            )}
           </div>
 
           <button
