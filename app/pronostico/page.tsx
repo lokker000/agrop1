@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { crops, findVariety } from "@/data/crops";
+import { regions } from "@/data/stations";
 import { calculateColdHours, type HourlyRecord } from "@/lib/cold-hours";
 import {
   proyectarCianamida,
@@ -10,8 +11,12 @@ import {
   type DayProjection,
 } from "@/lib/forecast";
 
-// Estación Los Lingues (INIA-329) para el acumulado histórico real desde agromet.
-const LOS_LINGUES_STATION = "INIA-329";
+// Región/estación por defecto: O'Higgins · Los Lingues (INIA-329).
+const DEFAULT_REGION =
+  regions.find((r) => r.id === "o-higgins") ?? regions[0];
+const DEFAULT_STATION =
+  DEFAULT_REGION.stations.find((s) => s.id === "INIA-329") ??
+  DEFAULT_REGION.stations[0];
 import {
   SnowIcon,
   LeafIcon,
@@ -62,6 +67,13 @@ export default function PronosticoPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Selección de región / estación (cualquier región del país).
+  const [regionId, setRegionId] = useState(DEFAULT_REGION.id);
+  const [stationId, setStationId] = useState(DEFAULT_STATION.id);
+  const region = regions.find((r) => r.id === regionId) ?? DEFAULT_REGION;
+  const station =
+    region.stations.find((s) => s.id === stationId) ?? region.stations[0];
+
   // Controles agronómicos
   const [cropId, setCropId] = useState(crops[0].id);
   const [varietyId, setVarietyId] = useState(crops[0].varieties[0].id);
@@ -76,8 +88,8 @@ export default function PronosticoPage() {
   const crop = crops.find((c) => c.id === cropId)!;
   const variety = findVariety(cropId, varietyId) ?? crop.varieties[0];
 
-  // Trae el histórico real de Los Lingues y calcula las HF acumuladas hasta hoy.
-  async function cargarHistorico(desde: string) {
+  // Trae el histórico real de la estación elegida y calcula las HF acumuladas hasta hoy.
+  async function cargarHistorico(desde: string, estacionId: string) {
     if (!desde) return;
     setHistLoading(true);
     setHistError(null);
@@ -85,7 +97,7 @@ export default function PronosticoPage() {
     try {
       const today = new Date().toISOString().slice(0, 10);
       const params = new URLSearchParams({
-        stationId: LOS_LINGUES_STATION,
+        stationId: estacionId,
         from: desde,
         to: today,
       });
@@ -96,14 +108,14 @@ export default function PronosticoPage() {
       const data: HourlyRecord[] = json.data ?? [];
       if (data.length === 0) {
         setHistError(
-          "La estación Los Lingues no tiene datos en ese rango. Ingresa las HF acumuladas a mano."
+          "Esta estación no tiene datos en ese rango. Ingresa las HF acumuladas a mano."
         );
         return;
       }
       const result = calculateColdHours(data, desde, today);
       setBaseHF(result.totalHF);
       setHistInfo(
-        `${result.totalHF} HF acumuladas desde ${desde} · ${data.length} registros (estación Los Lingues, INIA)`
+        `${result.totalHF} HF acumuladas desde ${desde} · ${data.length} registros (${station.name})`
       );
     } catch (e) {
       setHistError(
@@ -118,7 +130,8 @@ export default function PronosticoPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/pronostico", { cache: "no-store" });
+      const params = new URLSearchParams({ stationId });
+      const res = await fetch(`/api/pronostico?${params}`, { cache: "no-store" });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? `Error HTTP ${res.status}`);
       setData(json);
@@ -129,15 +142,17 @@ export default function PronosticoPage() {
     }
   }
 
+  // Recarga el pronóstico al montar y cada vez que cambia la estación.
   useEffect(() => {
     cargar();
-  }, []);
-
-  // Acumulado histórico automático: al montar y cada vez que cambia la dormancia.
-  useEffect(() => {
-    cargarHistorico(dormancyStart);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dormancyStart]);
+  }, [stationId]);
+
+  // Acumulado histórico automático: al cambiar dormancia o estación.
+  useEffect(() => {
+    cargarHistorico(dormancyStart, stationId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dormancyStart, stationId]);
 
   // Proyección de cianamida (se recalcula al cambiar variedad / base / datos).
   const proj = useMemo(() => {
@@ -174,7 +189,7 @@ export default function PronosticoPage() {
               </span>
             </h1>
             <p className="mt-2 text-sm text-gray-500">
-              {data?.ubicacion ?? "Los Lingues"} · próximos {data?.dias ?? 14} días ·
+              {data?.ubicacion ?? station.name} · próximos {data?.dias ?? 14} días ·
               modelo 0–7.2 °C · fuente Open-Meteo
             </p>
             {data?.generado && (
@@ -196,6 +211,43 @@ export default function PronosticoPage() {
           >
             {loading ? "Actualizando…" : "↻ Actualizar"}
           </button>
+        </div>
+
+        {/* Selección de región y estación (cualquier región del país) */}
+        <div className="card-premium animate-fade-up mb-6 grid gap-4 rounded-3xl p-6 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-gray-700">
+              Región
+            </span>
+            <select
+              value={regionId}
+              onChange={(e) => {
+                const r = regions.find((x) => x.id === e.target.value)!;
+                setRegionId(r.id);
+                setStationId(r.stations[0].id);
+              }}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+            >
+              {regions.map((r) => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-gray-700">
+              Estación ({region.stations.length})
+            </span>
+            <select
+              value={stationId}
+              onChange={(e) => setStationId(e.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+            >
+              {region.stations.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </label>
         </div>
 
         {error && (
@@ -269,10 +321,10 @@ export default function PronosticoPage() {
                   HF acumuladas (hasta hoy)
                   <button
                     type="button"
-                    onClick={() => cargarHistorico(dormancyStart)}
+                    onClick={() => cargarHistorico(dormancyStart, stationId)}
                     disabled={histLoading}
                     className="text-xs font-medium text-emerald-600 hover:text-emerald-800 disabled:opacity-50"
-                    title="Recalcular desde la estación Los Lingues"
+                    title="Recalcular desde la estación seleccionada"
                   >
                     {histLoading ? "…" : "↻"}
                   </button>
@@ -286,10 +338,10 @@ export default function PronosticoPage() {
                 />
                 <span className="mt-1 block text-xs text-gray-400">
                   {histLoading
-                    ? "Consultando estación Los Lingues…"
+                    ? "Consultando estación…"
                     : histError
                       ? histError
-                      : histInfo ?? "Automático desde estación Los Lingues (INIA)."}
+                      : histInfo ?? "Automático desde la estación seleccionada."}
                 </span>
               </label>
             </div>

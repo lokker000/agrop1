@@ -4,6 +4,17 @@
 export interface Station { id: string; name: string; }
 export interface Region { id: string; name: string; stations: Station[]; }
 
+/** Busca una estación por id y devuelve también su región. */
+export function findStation(
+  id: string
+): { station: Station; region: Region } | null {
+  for (const region of regions) {
+    const station = region.stations.find((s) => s.id === id);
+    if (station) return { station, region };
+  }
+  return null;
+}
+
 export const regions: Region[] = [
   {
     "id": "arica-y-parinacota",

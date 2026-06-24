@@ -13,15 +13,41 @@ import {
   canApplyCyanamide,
   type HourlyRecord,
 } from "./cold-hours";
+import { findStation } from "@/data/stations";
+import { STATION_COORDS } from "@/data/station-coords";
 
-// Coordenadas de la estación "Los Lingues, San Fernando" (INIA-329).
-// Aproximadas: ajusta si tienes las exactas del predio.
-export const LOS_LINGUES = {
-  nombre: "Los Lingues",
-  lat: -34.6275,
-  lon: -70.9192,
-  tz: "America/Santiago",
+const TZ = "America/Santiago";
+
+export interface ForecastLocation {
+  nombre: string; // etiqueta visible (nombre de la estación)
+  lat: number;
+  lon: number;
+}
+
+// Estación por defecto del pronóstico: "Los Lingues, San Fernando" (INIA-329).
+// Coordenadas oficiales de agrometeorologia.cl (ver data/station-coords.ts).
+const [LL_LAT, LL_LON] = STATION_COORDS["INIA-329"];
+export const LOS_LINGUES: ForecastLocation = {
+  nombre: "Los Lingues, San Fernando, VDCH-INIA",
+  lat: LL_LAT,
+  lon: LL_LON,
 };
+
+/**
+ * Resuelve la ubicación (lat/lon) EXACTA de una estación para el pronóstico,
+ * usando las coordenadas oficiales del predio (agrometeorologia.cl).
+ */
+export function resolveStationLocation(stationId: string): ForecastLocation {
+  const coords = STATION_COORDS[stationId];
+  if (!coords) {
+    throw new Error(
+      `No hay coordenadas para la estación "${stationId}".`
+    );
+  }
+  const found = findStation(stationId);
+  const nombre = found?.station.name ?? stationId;
+  return { nombre, lat: coords[0], lon: coords[1] };
+}
 
 const HOURLY_VARS = [
   "temperature_2m",
@@ -62,15 +88,18 @@ function toAppDateTime(t: string): string {
 }
 
 /**
- * Descarga el pronóstico horario de los próximos `days` días para Los Lingues.
+ * Descarga el pronóstico horario de los próximos `days` días para una ubicación.
  * Pensado para ejecutarse en el SERVIDOR (API route).
  */
-export async function fetchForecast(days = 14): Promise<ForecastResult> {
+export async function fetchForecast(
+  loc: ForecastLocation = LOS_LINGUES,
+  days = 14
+): Promise<ForecastResult> {
   const params = new URLSearchParams({
-    latitude: String(LOS_LINGUES.lat),
-    longitude: String(LOS_LINGUES.lon),
+    latitude: String(loc.lat),
+    longitude: String(loc.lon),
     hourly: HOURLY_VARS,
-    timezone: LOS_LINGUES.tz,
+    timezone: TZ,
     forecast_days: String(days),
     wind_speed_unit: "kmh",
   });
@@ -101,7 +130,7 @@ export async function fetchForecast(days = 14): Promise<ForecastResult> {
   const totalHF = resumenDiario.reduce((acc, d) => acc + d.horasFrio, 0);
 
   return {
-    ubicacion: LOS_LINGUES.nombre,
+    ubicacion: loc.nombre,
     generado: new Date().toISOString(),
     dias: days,
     hourly,
